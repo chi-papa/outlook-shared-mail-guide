@@ -1,0 +1,2365 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- 外部通信・外部リソース読み込み・フォーム送信を完全に遮断する厳格なCSP -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none';">
+<title>クラシック版 Outlook メール受信設定 確認・統一ガイド</title>
+<style>
+  /* ==========================================================================
+     1. Design Tokens
+        Default: Light Mode (#ffffff / #f8fafc / #1e293b / #1d4ed8 / #b45309)
+        Optional: Dark Mode (ヘッダー右上のボタンから切替・ストレージ保存なし)
+     ========================================================================== */
+  :root,
+  [data-theme="light"] {
+    --bg-canvas: #ffffff;
+    --bg-sidebar: #f8fafc;
+    --bg-surface: #ffffff;
+    --bg-surface-subtle: #f8fafc;
+    --bg-input: #ffffff;
+
+    --border-subtle: #e2e8f0;
+    --border-strong: #cbd5e1;
+
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+
+    --accent: #1d4ed8;
+    --accent-hover: #1e40af;
+    --accent-soft: #eff6ff;
+    --accent-border: #bfdbfe;
+    --accent-ink: #ffffff;
+
+    --ok-bg: #f0fdf4;
+    --ok-border: #bbf7d0;
+    --ok-accent: #16a34a;
+    --ok-text: #166534;
+
+    --warn-bg: #fffbeb;
+    --warn-border: #fde68a;
+    --warn-accent: #b45309;
+    --warn-text: #92400e;
+
+    --danger-bg: #fef2f2;
+    --danger-border: #fecaca;
+    --danger-text: #b91c1c;
+
+    --ui-chip-bg: #f1f5f9;
+    --ui-chip-border: #cbd5e1;
+    --ui-chip-text: #0f172a;
+
+    --sidebar-w: 272px;
+    --header-h: 64px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-drawer: -12px 0 36px rgba(15, 23, 42, 0.14);
+
+    --font-sans: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+
+  [data-theme="dark"] {
+    --bg-canvas: #0f172a;
+    --bg-sidebar: #111c30;
+    --bg-surface: #162238;
+    --bg-surface-subtle: #1e293b;
+    --bg-input: #0b1220;
+
+    --border-subtle: #263449;
+    --border-strong: #3b4f6b;
+
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+
+    --accent: #60a5fa;
+    --accent-hover: #93c5fd;
+    --accent-soft: rgba(96, 165, 250, 0.14);
+    --accent-border: rgba(96, 165, 250, 0.35);
+    --accent-ink: #0b1220;
+
+    --ok-bg: rgba(34, 197, 94, 0.11);
+    --ok-border: rgba(34, 197, 94, 0.35);
+    --ok-accent: #4ade80;
+    --ok-text: #86efac;
+
+    --warn-bg: rgba(245, 158, 11, 0.12);
+    --warn-border: rgba(245, 158, 11, 0.38);
+    --warn-accent: #fbbf24;
+    --warn-text: #fde68a;
+
+    --danger-bg: rgba(239, 68, 68, 0.14);
+    --danger-border: rgba(239, 68, 68, 0.42);
+    --danger-text: #fca5a5;
+
+    --ui-chip-bg: #1e293b;
+    --ui-chip-border: #334155;
+    --ui-chip-text: #f1f5f9;
+
+    --shadow-card: none;
+    --shadow-drawer: -12px 0 40px rgba(0, 0, 0, 0.52);
+  }
+
+  /* ==========================================================================
+     2. Base Reset & Readable Typography
+     ========================================================================== */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--header-h) + 28px);
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.85;
+    text-align: left;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    background-color: var(--bg-surface-subtle);
+    border: 1px solid var(--border-subtle);
+    padding: 2px 7px;
+    border-radius: 6px;
+    color: var(--text-primary);
+  }
+
+  /* ==========================================================================
+     3. Fixed Top Header
+     ========================================================================== */
+  .app-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--header-h);
+    background-color: var(--bg-canvas);
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 40;
+    gap: 16px;
+  }
+
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .brand-tag {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: var(--accent);
+    background-color: var(--accent-soft);
+    border: 1px solid var(--accent-border);
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+
+  .brand-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .btn:hover {
+    background-color: var(--bg-surface-subtle);
+    border-color: var(--border-strong);
+  }
+
+  .btn:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .btn-accent {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  .btn-accent:hover {
+    background-color: var(--accent-hover);
+    border-color: var(--accent-hover);
+  }
+
+  .btn-sm {
+    font-size: 12.5px;
+    padding: 6px 11px;
+  }
+
+  .btn-danger {
+    background-color: var(--danger-bg);
+    border-color: var(--danger-border);
+    color: var(--danger-text);
+  }
+
+  .btn-danger:hover {
+    opacity: 0.9;
+  }
+
+  .badge-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.22);
+    color: inherit;
+  }
+
+  /* ==========================================================================
+     4. Two-Column Layout: Left Fixed Map (272px) + Right Main Document (740px)
+     ========================================================================== */
+  .layout-shell {
+    padding-top: var(--header-h);
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: var(--header-h);
+    left: 0;
+    bottom: 0;
+    width: var(--sidebar-w);
+    background-color: var(--bg-sidebar);
+    border-right: 1px solid var(--border-subtle);
+    overflow-y: auto;
+    padding: 28px 18px 40px 18px;
+    z-index: 30;
+  }
+
+  .mobile-nav-toggle {
+    display: none;
+  }
+
+  /* Progress Card */
+  .progress-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-card);
+  }
+
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+  }
+
+  .progress-count {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--accent);
+  }
+
+  .progress-count.is-all-done {
+    color: var(--ok-accent);
+  }
+
+  .progress-bar-track {
+    height: 7px;
+    width: 100%;
+    background-color: var(--bg-surface-subtle);
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background-color: var(--ok-accent);
+    transition: width 0.25s ease;
+  }
+
+  /* Navigation Map */
+  .nav-group-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    padding: 0 10px;
+    margin: 20px 0 8px 0;
+    text-transform: uppercase;
+  }
+
+  .nav-group-label:first-of-type {
+    margin-top: 0;
+  }
+
+  .nav-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    border-left: 3px solid transparent;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .nav-item:hover {
+    background-color: var(--bg-surface);
+  }
+
+  .nav-item.is-active {
+    background-color: var(--accent-soft);
+    border-left-color: var(--accent);
+  }
+
+  .nav-item.is-active .nav-link {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .nav-check {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    flex-shrink: 0;
+    accent-color: var(--ok-accent);
+    cursor: pointer;
+  }
+
+  .nav-link {
+    flex: 1;
+    min-width: 0;
+    font-size: 13.5px;
+    line-height: 1.45;
+    color: var(--text-secondary);
+    text-decoration: none;
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+  }
+
+  .nav-item.is-checked .nav-link {
+    color: var(--text-muted);
+  }
+
+  .nav-num {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  .nav-item.is-active .nav-num {
+    color: var(--accent);
+  }
+
+  /* ==========================================================================
+     5. Right Main Document Area (Max 740px, Generous Whitespace)
+     ========================================================================== */
+  .main-content {
+    margin-left: var(--sidebar-w);
+    padding: 52px 48px 110px 48px;
+  }
+
+  .doc-container {
+    max-width: 740px;
+    margin: 0 auto;
+  }
+
+  /* Hero */
+  .doc-hero {
+    padding-bottom: 36px;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 48px;
+  }
+
+  .doc-eyebrow {
+    display: inline-block;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+  }
+
+  .doc-hero h1 {
+    margin: 0 0 18px 0;
+    font-size: 28px;
+    line-height: 1.4;
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    color: var(--text-primary);
+  }
+
+  .doc-lead {
+    margin: 0 0 22px 0;
+    font-size: 15.5px;
+    line-height: 1.9;
+    color: var(--text-secondary);
+  }
+
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .meta-pill {
+    background-color: var(--bg-surface-subtle);
+    border: 1px solid var(--border-subtle);
+    padding: 4px 12px;
+    border-radius: 999px;
+  }
+
+  /* Major Sections */
+  .major-section {
+    margin-bottom: 56px;
+  }
+
+  .major-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 20px 0;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border-subtle);
+    font-size: 21px;
+    font-weight: 800;
+    line-height: 1.4;
+    color: var(--text-primary);
+  }
+
+  .major-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background-color: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid var(--accent-border);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .section-intro {
+    margin: 0 0 22px 0;
+    color: var(--text-secondary);
+  }
+
+  /* Cards */
+  .doc-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 30px 32px;
+    margin-bottom: 28px;
+    box-shadow: var(--shadow-card);
+    transition: border-color 0.2s ease;
+  }
+
+  .doc-card:last-child {
+    margin-bottom: 0;
+  }
+
+  .doc-card.is-done {
+    border-color: var(--ok-border);
+  }
+
+  .doc-card.is-critical {
+    border-top: 3px solid var(--warn-accent);
+  }
+
+  .card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .card-title-wrap {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .step-badge {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 3px 11px;
+    border-radius: 999px;
+    background-color: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid var(--accent-border);
+  }
+
+  .doc-card.is-done .step-badge {
+    background-color: var(--ok-bg);
+    color: var(--ok-text);
+    border-color: var(--ok-border);
+  }
+
+  .priority-tag {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 6px;
+    background-color: var(--warn-bg);
+    color: var(--warn-accent);
+    border: 1px solid var(--warn-border);
+  }
+
+  .card-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.45;
+    color: var(--text-primary);
+  }
+
+  .done-toggle {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 13px;
+    border-radius: 999px;
+    border: 1px solid var(--border-subtle);
+    background-color: var(--bg-surface-subtle);
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+  }
+
+  .done-toggle:hover {
+    border-color: var(--border-strong);
+  }
+
+  .doc-card.is-done .done-toggle {
+    background-color: var(--ok-bg);
+    border-color: var(--ok-border);
+    color: var(--ok-text);
+  }
+
+  .card-body p {
+    margin: 0 0 15px 0;
+    color: var(--text-secondary);
+  }
+
+  .card-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  .card-body ol,
+  .card-body ul {
+    margin: 0 0 18px 0;
+    padding-left: 24px;
+    color: var(--text-secondary);
+  }
+
+  .card-body li {
+    margin-bottom: 12px;
+  }
+
+  .card-body li:last-child {
+    margin-bottom: 0;
+  }
+
+  .card-body strong {
+    color: var(--text-primary);
+  }
+
+  /* Mechanism Visual Comparison */
+  .mech-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  .mech-box {
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+    border: 1px solid var(--border-subtle);
+    background-color: var(--bg-surface-subtle);
+    font-size: 14.5px;
+    line-height: 1.75;
+  }
+
+  .mech-box.is-ng {
+    background-color: var(--warn-bg);
+    border-color: var(--warn-border);
+  }
+
+  .mech-box.is-ok {
+    background-color: var(--ok-bg);
+    border-color: var(--ok-border);
+  }
+
+  .mech-title {
+    font-weight: 800;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+  }
+
+  .mech-box.is-ng .mech-title {
+    color: var(--warn-accent);
+  }
+
+  .mech-box.is-ok .mech-title {
+    color: var(--ok-text);
+  }
+
+  /* Priority Check Grid */
+  .priority-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  .priority-item {
+    background-color: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    border-left: 4px solid var(--warn-accent);
+    border-radius: var(--radius-sm);
+    padding: 16px 18px;
+  }
+
+  .priority-item-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--warn-accent);
+    margin-bottom: 6px;
+  }
+
+  .priority-item p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+  }
+
+  /* Unified Setting Highlight Box (STEP 3) */
+  .unify-rules {
+    background-color: var(--accent-soft);
+    border: 1px solid var(--accent-border);
+    border-radius: var(--radius-md);
+    padding: 18px 22px;
+    margin: 18px 0;
+  }
+
+  .unify-rule-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+    font-size: 15px;
+  }
+
+  .unify-rule-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .rule-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background-color: var(--accent);
+    color: var(--accent-ink);
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 800;
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+
+  /* UI Breadcrumb Badges */
+  .ui-path {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    vertical-align: baseline;
+    margin: 0 2px;
+  }
+
+  .ui-btn {
+    display: inline-block;
+    font-size: 13.5px;
+    font-weight: 700;
+    line-height: 1.4;
+    padding: 2px 9px;
+    border-radius: 6px;
+    background-color: var(--ui-chip-bg);
+    border: 1px solid var(--ui-chip-border);
+    color: var(--ui-chip-text);
+  }
+
+  .ui-sep {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+
+  /* Callouts */
+  .verify-callout {
+    margin-top: 22px;
+    background-color: var(--ok-bg);
+    border: 1px solid var(--ok-border);
+    border-left: 4px solid var(--ok-accent);
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--text-primary);
+  }
+
+  .verify-label {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--ok-text);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--ok-border);
+    padding: 1px 8px;
+    border-radius: 4px;
+    margin-right: 10px;
+    vertical-align: 1px;
+  }
+
+  .warn-callout {
+    margin-top: 18px;
+    background-color: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    border-left: 4px solid var(--warn-accent);
+    border-radius: var(--radius-sm);
+    padding: 15px 18px;
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--text-secondary);
+  }
+
+  .warn-callout strong {
+    color: var(--warn-accent);
+  }
+
+  .info-callout {
+    margin-top: 16px;
+    background-color: var(--bg-surface-subtle);
+    border: 1px solid var(--border-subtle);
+    border-left: 4px solid var(--accent);
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--text-secondary);
+  }
+
+  /* Inline Checklist Prompt Banner */
+  .checklist-banner {
+    margin-top: 24px;
+    background-color: var(--bg-surface-subtle);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .checklist-banner-text {
+    font-size: 14.5px;
+    color: var(--text-secondary);
+    line-height: 1.65;
+  }
+
+  .checklist-banner-text strong {
+    color: var(--text-primary);
+  }
+
+  /* Accordion (Operational Notes) */
+  details.acc {
+    margin-top: 14px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background-color: var(--bg-surface-subtle);
+    overflow: hidden;
+  }
+
+  details.acc:first-of-type {
+    margin-top: 0;
+  }
+
+  details.acc summary {
+    padding: 16px 20px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    user-select: none;
+  }
+
+  details.acc summary::-webkit-details-marker {
+    display: none;
+  }
+
+  details.acc summary::after {
+    content: "+";
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  details.acc[open] summary::after {
+    content: "−";
+  }
+
+  .acc-body {
+    padding: 16px 20px 20px 20px;
+    border-top: 1px solid var(--border-subtle);
+    background-color: var(--bg-surface);
+    font-size: 14.5px;
+    line-height: 1.8;
+    color: var(--text-secondary);
+  }
+
+  /* Document Footer (Disclaimer) */
+  .doc-footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-subtle);
+    font-size: 12.5px;
+    line-height: 1.75;
+    color: var(--text-muted);
+  }
+
+  .doc-footer p {
+    margin: 0 0 6px 0;
+  }
+
+  .doc-footer p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* ==========================================================================
+     6. Optional Slide-in Device Checklist Drawer (Right Side)
+     ========================================================================== */
+  .drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(15, 23, 42, 0.38);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 50;
+  }
+
+  .drawer-backdrop.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .checklist-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 480px;
+    max-width: 100vw;
+    background-color: var(--bg-canvas);
+    border-left: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-drawer);
+    transform: translateX(100%);
+    transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .checklist-drawer.is-open {
+    transform: translateX(0);
+  }
+
+  .drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    background-color: var(--bg-sidebar);
+    flex-shrink: 0;
+  }
+
+  .drawer-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 20px 28px 20px;
+  }
+
+  .privacy-box {
+    background-color: var(--ok-bg);
+    border: 1px solid var(--ok-border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-size: 12.5px;
+    line-height: 1.65;
+    color: var(--text-secondary);
+    margin-bottom: 18px;
+  }
+
+  .privacy-box strong {
+    color: var(--ok-text);
+  }
+
+  .drawer-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    background-color: var(--bg-surface-subtle);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    margin-bottom: 16px;
+  }
+
+  .std-days-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .std-select {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-strong);
+    background-color: var(--bg-input);
+    color: var(--accent);
+    cursor: pointer;
+  }
+
+  .device-progress {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-secondary);
+  }
+
+  .device-progress.is-all-done {
+    color: var(--ok-accent);
+  }
+
+  /* Device Cards inside Drawer */
+  .device-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .device-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    transition: border-color 0.15s ease;
+  }
+
+  .device-card.is-row-done {
+    border-color: var(--ok-border);
+    background-color: var(--ok-bg);
+  }
+
+  .device-card.is-row-warn {
+    border-color: var(--warn-accent);
+  }
+
+  .device-row-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .device-no {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--text-muted);
+    background-color: var(--bg-surface-subtle);
+    border: 1px solid var(--border-subtle);
+    padding: 2px 7px;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+
+  .device-input {
+    flex: 1;
+    min-width: 0;
+    padding: 7px 10px;
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    color: var(--text-primary);
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+  }
+
+  .device-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.75;
+  }
+
+  .btn-remove-row {
+    flex-shrink: 0;
+    padding: 5px 8px;
+    font-size: 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-subtle);
+    background-color: var(--bg-surface-subtle);
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+
+  .btn-remove-row:hover {
+    border-color: var(--danger-border);
+    color: var(--danger-text);
+    background-color: var(--danger-bg);
+  }
+
+  .device-row-grid {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px 12px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .proto-select {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 5px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border-strong);
+    background-color: var(--bg-input);
+    color: var(--text-primary);
+  }
+
+  .inline-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .inline-check input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .inline-check.is-done-check input[type="checkbox"] {
+    accent-color: var(--ok-accent);
+  }
+
+  .days-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12.5px;
+  }
+
+  .days-input {
+    width: 58px;
+    padding: 5px 7px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    text-align: right;
+    color: var(--text-primary);
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+  }
+
+  .imap-note {
+    font-size: 12px;
+    color: var(--ok-text);
+    background-color: var(--ok-bg);
+    border: 1px solid var(--ok-border);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+
+  .row-warn-badge {
+    margin-top: 10px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background-color: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    color: var(--warn-accent);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .btn-add-device {
+    width: 100%;
+    padding: 10px;
+    border-style: dashed;
+    border-width: 1.5px;
+    border-color: var(--accent-border);
+    background-color: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .btn-add-device:hover {
+    background-color: var(--accent-soft);
+    border-color: var(--accent);
+  }
+
+  .drawer-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border-subtle);
+    background-color: var(--bg-sidebar);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(12px);
+    background-color: var(--text-primary);
+    color: var(--bg-canvas);
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 13.5px;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 80;
+    white-space: nowrap;
+  }
+
+  .toast.is-show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ==========================================================================
+     7. Responsive Layout (< 960px)
+     ========================================================================== */
+  @media (max-width: 960px) {
+    .sidebar {
+      position: sticky;
+      top: var(--header-h);
+      width: 100%;
+      height: auto;
+      bottom: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 12px 16px;
+      overflow: visible;
+    }
+
+    .mobile-nav-toggle {
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .sidebar-inner {
+      display: none;
+      margin-top: 14px;
+      max-height: 62vh;
+      overflow-y: auto;
+    }
+
+    .sidebar.is-mobile-open .sidebar-inner {
+      display: block;
+    }
+
+    .main-content {
+      margin-left: 0;
+      padding: 32px 20px 80px 20px;
+    }
+
+    .doc-hero h1 {
+      font-size: 23px;
+    }
+
+    .doc-card {
+      padding: 22px 20px;
+    }
+
+    .card-head {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .mech-grid,
+    .priority-list {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 580px) {
+    .app-header {
+      padding: 0 14px;
+    }
+    .brand-tag {
+      display: none;
+    }
+    .btn-label-hide-sm {
+      display: none;
+    }
+  }
+
+  /* ==========================================================================
+     8. Print Stylesheet (Generic Guide Only - Hides Drawer & Personal Memos)
+     ========================================================================== */
+  @media print {
+    html, body {
+      background: #ffffff !important;
+      color: #000000 !important;
+      font-size: 10.5pt;
+      line-height: 1.6;
+    }
+
+    .app-header,
+    .sidebar,
+    .drawer-backdrop,
+    .checklist-drawer,
+    .done-toggle,
+    .checklist-banner,
+    .toast {
+      display: none !important;
+    }
+
+    .layout-shell {
+      padding-top: 0 !important;
+    }
+
+    .main-content {
+      margin-left: 0 !important;
+      padding: 0 !important;
+    }
+
+    .doc-container {
+      max-width: 100% !important;
+    }
+
+    .doc-hero {
+      border-bottom: 2px solid #000000 !important;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+    }
+
+    .major-section {
+      margin-bottom: 22px !important;
+    }
+
+    .doc-card {
+      background: #ffffff !important;
+      border: 1px solid #cbd5e1 !important;
+      box-shadow: none !important;
+      padding: 15px 18px !important;
+      margin-bottom: 14px !important;
+      break-inside: avoid;
+    }
+
+    .doc-hero h1,
+    .major-heading,
+    .card-title,
+    .card-body strong,
+    .mech-title,
+    .priority-item-title {
+      color: #000000 !important;
+    }
+
+    .doc-lead,
+    .section-intro,
+    .card-body p,
+    .card-body li,
+    .acc-body,
+    .doc-footer {
+      color: #1f2937 !important;
+    }
+
+    .step-badge,
+    .major-num,
+    .ui-btn,
+    code,
+    .meta-pill,
+    .verify-label,
+    .priority-tag {
+      background: #f3f4f6 !important;
+      color: #000000 !important;
+      border: 1px solid #9ca3af !important;
+    }
+
+    .verify-callout,
+    .warn-callout,
+    .info-callout,
+    .unify-rules,
+    .mech-box,
+    .priority-item {
+      background: #f9fafb !important;
+      border: 1px solid #9ca3af !important;
+      border-left: 4px solid #374151 !important;
+      color: #000000 !important;
+    }
+
+    .warn-callout strong {
+      color: #000000 !important;
+    }
+
+    .rule-num {
+      background: #374151 !important;
+      color: #ffffff !important;
+    }
+
+    details.acc {
+      background: #ffffff !important;
+      border: 1px solid #cbd5e1 !important;
+    }
+
+    details.acc summary {
+      color: #000000 !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <!-- 固定トップヘッダー -->
+  <header class="app-header">
+    <div class="header-brand">
+      <span class="brand-tag">クラシック版 Outlook</span>
+      <span class="brand-title">メール受信設定 確認・統一ガイド</span>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn btn-accent" id="btnOpenDrawer" aria-expanded="false" aria-controls="checklistDrawer">
+        <span>📋</span><span>端末チェックリスト</span><span class="badge-count" id="headerDeviceBadge">0/3</span>
+      </button>
+      <button type="button" class="btn" id="btnTheme" title="ダークモード・ライトモード切替">
+        <span id="themeIcon">🌙</span><span class="btn-label-hide-sm" id="themeLabel">ダーク</span>
+      </button>
+      <button type="button" class="btn" id="btnPrint" title="手順書を印刷またはPDF保存（端末リストは非表示）">
+        <span>🖨</span><span class="btn-label-hide-sm">印刷 / PDF</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="layout-shell">
+    <!-- 左サイドバー：全体マップ＆進捗（狭い画面では上部折りたたみ目次） -->
+    <aside class="sidebar" id="sidebar" aria-label="全体の流れと進捗">
+      <button type="button" class="mobile-nav-toggle" id="btnMobileNav" aria-expanded="false">
+        <span>目次・確認進捗（<span id="mobileProgressText">0 / 4</span> 完了）</span>
+        <span id="mobileNavArrow">▼</span>
+      </button>
+
+      <div class="sidebar-inner">
+        <div class="progress-card">
+          <div class="progress-header">
+            <span>手順の確認進捗</span>
+            <span class="progress-count" id="progressText">0 / 4 完了</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progressFill"></div>
+          </div>
+        </div>
+
+        <div class="nav-group-label">トラブルの仕組み・事前確認</div>
+        <ul class="nav-list">
+          <li class="nav-item" data-target="sec-intro">
+            <a class="nav-link" href="#sec-intro"><span class="nav-num">1.</span><span>はじめに（目的・仕組み）</span></a>
+          </li>
+          <li class="nav-item" data-target="sec-priority">
+            <a class="nav-link" href="#sec-priority"><span class="nav-num">2.</span><span>優先確認のポイント</span></a>
+          </li>
+        </ul>
+
+        <div class="nav-group-label">確認・修正手順（STEP 1〜4）</div>
+        <ul class="nav-list">
+          <li class="nav-item" data-target="step-1">
+            <input type="checkbox" class="nav-check" data-step="step-1" aria-label="STEP 1を完了にする">
+            <a class="nav-link" href="#step-1"><span class="nav-num">S1</span><span>設定画面を開く</span></a>
+          </li>
+          <li class="nav-item" data-target="step-2">
+            <input type="checkbox" class="nav-check" data-step="step-2" aria-label="STEP 2を完了にする">
+            <a class="nav-link" href="#step-2"><span class="nav-num">S2</span><span>受信の種類を確認</span></a>
+          </li>
+          <li class="nav-item" data-target="step-3">
+            <input type="checkbox" class="nav-check" data-step="step-3" aria-label="STEP 3を完了にする">
+            <a class="nav-link" href="#step-3"><span class="nav-num">S3</span><span>削除日数を統一【最重要】</span></a>
+          </li>
+          <li class="nav-item" data-target="step-4">
+            <input type="checkbox" class="nav-check" data-step="step-4" aria-label="STEP 4を完了にする">
+            <a class="nav-link" href="#step-4"><span class="nav-num">S4</span><span>保存・テスト送信</span></a>
+          </li>
+        </ul>
+
+        <div class="nav-group-label">運用ルール・まとめ</div>
+        <ul class="nav-list">
+          <li class="nav-item" data-target="sec-notes">
+            <a class="nav-link" href="#sec-notes"><span class="nav-num">4.</span><span>運用上の注意事項</span></a>
+          </li>
+          <li class="nav-item" data-target="sec-summary">
+            <a class="nav-link" href="#sec-summary"><span class="nav-num">5.</span><span>まとめ（再発防止3点）</span></a>
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- 右メインエリア：縦長の手順ドキュメント -->
+    <main class="main-content">
+      <article class="doc-container">
+        <!-- タイトル・導入 -->
+        <header class="doc-hero">
+          <span class="doc-eyebrow">複数端末メール共有 トラブル防止ガイド</span>
+          <h1>クラシック版 Outlook メール受信設定 確認・統一ガイド</h1>
+          <p class="doc-lead">
+            同じメールアドレスを複数台のパソコンやスマートフォンで共有している環境で、「一部の端末だけメールが届かない」「特定の人のPCにしか受信されない」といったトラブルを防ぎ、全端末の受信設定を統一するための手順ガイドです。
+          </p>
+          <div class="hero-meta">
+            <span class="meta-pill">対象ソフト：クラシック版 Outlook</span>
+            <span class="meta-pill">対象方式：POP / SMTP 受信</span>
+            <span class="meta-pill">オフライン動作・外部通信なし</span>
+          </div>
+        </header>
+
+        <!-- 1. はじめに（目的・仕組み） -->
+        <section class="major-section" id="sec-intro" data-spy-section="sec-intro">
+          <h2 class="major-heading"><span class="major-num">1</span>はじめに（目的・仕組み）</h2>
+          <div class="doc-card">
+            <div class="card-body">
+              <p>
+                同じメールアドレスを複数台の端末で共有する場合、<strong>たった1台でも「受信と同時に（または短い日数で）サーバーからメールを消す設定」になっていると、他の端末が受信する前にメールが消えてしまい、届かなくなります。</strong>
+              </p>
+              <p>
+                POP方式でメールを受信しているすべての端末で「サーバーにコピーを残す」「削除する日数を同じにする」設定へ揃えることが、受信漏れを防ぐ確実な対策です。
+              </p>
+
+              <div class="mech-grid">
+                <div class="mech-box is-ng">
+                  <div class="mech-title">⚠ トラブルが起きる状態（不統一）</div>
+                  <div>端末Aがメールを受信した直後にサーバーから削除してしまうと、あとから受信操作をした端末B・端末Cにはそのメールが届きません。</div>
+                </div>
+                <div class="mech-box is-ok">
+                  <div class="mech-title">✓ 正常に共有できる状態（統一済み）</div>
+                  <div>全端末で「サーバーにコピーを置く」を有効にし、削除日数を同じ日数（14日または30日）に揃えることで、どの端末でも漏れなく受信できます。</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. 優先確認のポイント -->
+        <section class="major-section" id="sec-priority" data-spy-section="sec-priority">
+          <h2 class="major-heading"><span class="major-num">2</span>優先確認のポイント（怪しい端末の見分け方）</h2>
+          <p class="section-intro">
+            共有している端末が多い場合、まずは以下の特徴に当てはまる端末から優先的に確認すると原因を素早く特定できます。
+          </p>
+
+          <div class="doc-card">
+            <div class="card-body">
+              <p>
+                メールソフトを初期設定のまま使い始めると、標準で「サーバーから削除する」または「短い期間で削除する」設定になっているケースが多くあります。
+              </p>
+              <div class="priority-list">
+                <div class="priority-item">
+                  <div class="priority-item-title">最近新しく導入・買い替えしたPCやスマホ</div>
+                  <p>アカウントを新規追加した際、配信設定（コピーを残す日数）の変更が漏れているケースが最も多く見られます。</p>
+                </div>
+                <div class="priority-item">
+                  <div class="priority-item-title">普段あまり使っていないサブ端末</div>
+                  <p>久しぶりに起動して一括受信したタイミングで、サーバー上のメールをまとめて削除してしまうことがあります。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. 全端末で確認・修正する4ステップ -->
+        <section class="major-section" id="sec-steps">
+          <h2 class="major-heading"><span class="major-num">3</span>全端末で確認・修正する4ステップ（クラシック版 Outlook）</h2>
+          <p class="section-intro">
+            共有メールアドレスを設定しているすべての端末で、以下の STEP 1〜4 を順番に確認・統一します。
+          </p>
+
+          <!-- STEP 1 -->
+          <div class="doc-card" id="step-1" data-spy-section="step-1">
+            <div class="card-head">
+              <div class="card-title-wrap">
+                <span class="step-badge">STEP 1</span>
+                <h3 class="card-title">画面を開く</h3>
+              </div>
+              <button type="button" class="done-toggle" data-toggle-step="step-1">☐ 完了にする</button>
+            </div>
+            <div class="card-body">
+              <p>
+                クラシック版 Outlook を起動し、画面左上のメニューから以下の順に開きます。
+              </p>
+              <p>
+                <span class="ui-path">
+                  <span class="ui-btn">ファイル</span>
+                  <span class="ui-sep">＞</span>
+                  <span class="ui-btn">アカウント設定</span>
+                  <span class="ui-sep">＞</span>
+                  <span class="ui-btn">アカウント設定(A)...</span>
+                </span>
+              </p>
+              <div class="verify-callout">
+                <span class="verify-label">確認ポイント</span>登録されているメールアドレスの一覧ウィンドウ（「アカウント設定」）が表示されます。
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 2 -->
+          <div class="doc-card" id="step-2" data-spy-section="step-2">
+            <div class="card-head">
+              <div class="card-title-wrap">
+                <span class="step-badge">STEP 2</span>
+                <h3 class="card-title">種類を確認</h3>
+              </div>
+              <button type="button" class="done-toggle" data-toggle-step="step-2">☐ 完了にする</button>
+            </div>
+            <div class="card-body">
+              <ol>
+                <li>メールアドレス一覧の右隣にある<strong>「種類」</strong>欄を確認します。</li>
+                <li><strong><code>POP/SMTP</code></strong> になっている場合、該当する共有メールアドレスを選択して <span class="ui-btn">変更</span> をクリックします。</li>
+              </ol>
+
+              <div class="info-callout">
+                <strong>※「IMAP」になっている端末について：</strong><br>
+                種類が <code>IMAP/SMTP</code> になっている端末はサーバー同期型のため、ここでの削除日数設定の修正は不要です（チェックリスト上では「IMAP」として完了にして構いません）。
+              </div>
+
+              <div class="verify-callout">
+                <span class="verify-label">確認ポイント</span>サーバー設定（「POPアカウントの設定」または「アカウントの変更」）画面が開きます。
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 3 -->
+          <div class="doc-card is-critical" id="step-3" data-spy-section="step-3">
+            <div class="card-head">
+              <div class="card-title-wrap">
+                <span class="step-badge">STEP 3</span>
+                <span class="priority-tag">最重要</span>
+                <h3 class="card-title">設定を統一する</h3>
+              </div>
+              <button type="button" class="done-toggle" data-toggle-step="step-3">☐ 完了にする</button>
+            </div>
+            <div class="card-body">
+              <p>
+                画面下部（または <span class="ui-path"><span class="ui-btn">詳細設定</span><span class="ui-sep">＞</span><span class="ui-btn">詳細設定</span></span> タブ内）にある<strong>「配信」</strong>項目を確認し、全端末で以下の2点を同じ設定に揃えます。
+              </p>
+
+              <div class="unify-rules">
+                <div class="unify-rule-row">
+                  <span class="rule-num">1</span>
+                  <div><strong>「サーバーにメッセージのコピーを置く」</strong>にチェックを入れる</div>
+                </div>
+                <div class="unify-rule-row">
+                  <span class="rule-num">2</span>
+                  <div><strong>「サーバーから削除する」</strong>にチェックを入れ、全端末で同じ日数（<strong><code>14日</code></strong> または <strong><code>30日</code></strong>）に設定する</div>
+                </div>
+              </div>
+
+              <div class="warn-callout">
+                <strong>⚠ 削除日数の不統一に注意：</strong><br>
+                他の端末が「14日」や「30日」になっていても、<strong>1台だけ日数が短い設定（例：5日）</strong>が残っていると、その端末が受信したタイミングで5日前のメールがサーバーから消えてしまい、長期間起動していなかった他の端末に届かなくなります。
+              </div>
+
+              <div class="verify-callout">
+                <span class="verify-label">確認ポイント</span>「サーバーにメッセージのコピーを置く」がオンになり、削除日数がチーム・社内で決めた統一基準（14日または30日）と一致していることを確認します。
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 4 -->
+          <div class="doc-card" id="step-4" data-spy-section="step-4">
+            <div class="card-head">
+              <div class="card-title-wrap">
+                <span class="step-badge">STEP 4</span>
+                <h3 class="card-title">保存・完了とテスト受信</h3>
+              </div>
+              <button type="button" class="done-toggle" data-toggle-step="step-4">☐ 完了にする</button>
+            </div>
+            <div class="card-body">
+              <ol>
+                <li>
+                  設定を変更したら、画面下の
+                  <span class="ui-path"><span class="ui-btn">次へ</span><span class="ui-sep">＞</span><span class="ui-btn">完了</span></span>
+                  （詳細設定ウィンドウを開いた場合は <span class="ui-btn">OK</span> → <span class="ui-btn">次へ</span> → <span class="ui-btn">完了</span>）をクリックして保存し、画面を閉じます。
+                </li>
+                <li>テストメールを1通送信し、設定した端末だけでなく<strong>他の共有端末でも同じメールが受信できるか</strong>を確認します。</li>
+              </ol>
+
+              <div class="verify-callout">
+                <span class="verify-label">確認ポイント</span>「テストアカウント設定」の画面でステータスに<strong>緑のチェック</strong>が付き、テストメールが複数端末で問題なく受信できれば完了です。
+              </div>
+            </div>
+          </div>
+
+          <!-- 端末チェックリストへの案内 -->
+          <div class="checklist-banner">
+            <div class="checklist-banner-text">
+              <strong>複数台の確認漏れを防ぐには：</strong><br>
+              右上の「端末チェックリスト」を開くと、確認した端末ごとの種別（POP/IMAP）と削除日数を一時メモしながら抜け漏れをチェックできます。
+            </div>
+            <button type="button" class="btn btn-accent" id="btnOpenDrawerInline">📋 端末チェックリストを開く</button>
+          </div>
+        </section>
+
+        <!-- 4. 運用上の注意事項 -->
+        <section class="major-section" id="sec-notes" data-spy-section="sec-notes">
+          <h2 class="major-heading"><span class="major-num">4</span>運用上の注意事項</h2>
+          <p class="section-intro">
+            設定を統一したあとも、安定したメール受信を続けるために以下の2点にご注意ください。
+          </p>
+
+          <details class="acc" open>
+            <summary>「新しい Outlook（New Outlook）」への切り替えは控える</summary>
+            <div class="acc-body">
+              <p>
+                Outlook 画面の右上にある <span class="ui-btn">新しい Outlook を試す</span> スイッチをオンにすると、POP設定の細かな変更（サーバー上のコピー保持や削除日数の調整など）ができなくなる場合があります。
+              </p>
+              <p>
+                複数端末でPOP共有を行っている間はスイッチをオフのままにし、従来の<strong>クラシック版 Outlook</strong> で運用してください。
+              </p>
+            </div>
+          </details>
+
+          <details class="acc" open>
+            <summary>設定統一後も特定の送信元だけ届かない場合（Webメールの確認）</summary>
+            <div class="acc-body">
+              <p>
+                全端末でPOP設定を統一したにもかかわらず特定の相手からのメールだけが届かない場合は、メールサーバー側の迷惑メールフィルタで隔離されている可能性があります。
+              </p>
+              <p>
+                ブラウザーから利用しているメールサービスの<strong>Webメール</strong>にログインし、以下の2点を確認してください。
+              </p>
+              <ul>
+                <li><strong>「迷惑メール」フォルダ</strong>に該当メールが振り分けられていないか</li>
+                <li>必要な取引先・送信元のアドレスやドメインが<strong>「受信許可リスト」</strong>に登録されているか</li>
+              </ul>
+            </div>
+          </details>
+        </section>
+
+        <!-- 5. まとめ -->
+        <section class="major-section" id="sec-summary" data-spy-section="sec-summary">
+          <h2 class="major-heading"><span class="major-num">5</span>まとめ（再発防止の3ポイント）</h2>
+          <div class="doc-card">
+            <div class="card-body">
+              <p>複数端末でのメール受信漏れを防ぐため、以下の3点をチーム・社内の基本ルールとして共有しておくと安心です。</p>
+              <ol>
+                <li><strong>全POP端末で「コピーを置く＋同じ削除日数（14日または30日）」に統一する</strong>（1台でも短い日数を残さない）</li>
+                <li><strong>新しいPC・スマホを追加するときに必ず同じ設定を適用する</strong>（初期設定のまま使い始めない）</li>
+                <li><strong>クラシック版 Outlook のまま運用し、不達時はWebメール側の迷惑メールフォルダも確認する</strong></li>
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6. フッター（非公式表記・免責） -->
+        <footer class="doc-footer">
+          <p>※ 本ページは個人が作成した非公式ガイドであり、Microsoft Corporation および各メールサービス提供元とは一切関係ありません。記載されている製品名・サービス名は各社の商標または登録商標です。</p>
+          <p>※ 本ガイドの内容は「現状のまま」提供されるものであり、設定変更や運用によって生じたいかなる損害についても作成者は責任を負いかねます。ご利用環境や社内規定に合わせて自己責任にてご活用ください。</p>
+        </footer>
+      </article>
+    </main>
+  </div>
+
+  <!-- 右側スライドイン：端末別確認チェックリスト（任意利用・印刷時は非表示） -->
+  <div class="drawer-backdrop" id="drawerBackdrop" aria-hidden="true"></div>
+  <aside class="checklist-drawer" id="checklistDrawer" aria-label="端末別確認チェックリスト" aria-hidden="true">
+    <div class="drawer-header">
+      <h2>📋 端末別確認チェックリスト</h2>
+      <button type="button" class="btn btn-sm" id="btnCloseDrawer" aria-label="チェックリストを閉じる">✕ 閉じる</button>
+    </div>
+
+    <div class="drawer-body">
+      <div class="privacy-box">
+        <strong>🔒 完全ローカル・一時メモリ設計：</strong>外部通信は CSP で完全遮断されており、Cookie や localStorage 等への保存も一切行いません。ページを閉じるか下の「入力をすべて消去」を押すと全データが消去されます（印刷時にも非表示になります）。
+      </div>
+
+      <div class="drawer-controls">
+        <div class="std-days-wrap">
+          <label for="stdDaysSelect">統一基準日数：</label>
+          <select id="stdDaysSelect" class="std-select" autocomplete="off">
+            <option value="14">14日</option>
+            <option value="30">30日</option>
+          </select>
+        </div>
+        <div class="device-progress" id="deviceProgressText">0 / 3 台完了</div>
+      </div>
+
+      <!-- JSで安全にDOM構築（innerHTML不使用） -->
+      <div class="device-list" id="deviceList"></div>
+
+      <button type="button" class="btn btn-add-device" id="btnAddDevice">＋ 端末を追加</button>
+    </div>
+
+    <div class="drawer-footer">
+      <button type="button" class="btn btn-sm btn-danger" id="btnClearDevices">入力をすべて消去</button>
+      <button type="button" class="btn btn-sm" id="btnDoneDrawer">閉じる</button>
+    </div>
+  </aside>
+
+  <!-- トースト通知 -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ==========================================================================
+     1. In-memory State (Cookie / localStorage / sessionStorage / IndexedDB 不使用)
+     ========================================================================== */
+  const STEP_IDS = ['step-1', 'step-2', 'step-3', 'step-4'];
+  const completedSteps = new Set();
+
+  let standardDays = 14;
+  let nextDeviceUid = 1;
+  let devices = [];
+
+  function createEmptyDevice() {
+    return {
+      uid: nextDeviceUid++,
+      name: '',
+      protocol: 'POP',
+      keepCopy: false,
+      deleteDays: String(standardDays),
+      done: false
+    };
+  }
+
+  function resetDevicesToInitial() {
+    standardDays = 14;
+    nextDeviceUid = 1;
+    devices = [
+      createEmptyDevice(),
+      createEmptyDevice(),
+      createEmptyDevice()
+    ];
+  }
+
+  /* ==========================================================================
+     2. DOM References
+     ========================================================================== */
+  const sidebar = document.getElementById('sidebar');
+  const btnMobileNav = document.getElementById('btnMobileNav');
+  const mobileNavArrow = document.getElementById('mobileNavArrow');
+  const mobileProgressText = document.getElementById('mobileProgressText');
+  const progressText = document.getElementById('progressText');
+  const progressFill = document.getElementById('progressFill');
+
+  const btnTheme = document.getElementById('btnTheme');
+  const themeIcon = document.getElementById('themeIcon');
+  const themeLabel = document.getElementById('themeLabel');
+  const btnPrint = document.getElementById('btnPrint');
+
+  const btnOpenDrawer = document.getElementById('btnOpenDrawer');
+  const btnOpenDrawerInline = document.getElementById('btnOpenDrawerInline');
+  const btnCloseDrawer = document.getElementById('btnCloseDrawer');
+  const btnDoneDrawer = document.getElementById('btnDoneDrawer');
+  const drawerBackdrop = document.getElementById('drawerBackdrop');
+  const checklistDrawer = document.getElementById('checklistDrawer');
+
+  const stdDaysSelect = document.getElementById('stdDaysSelect');
+  const deviceProgressText = document.getElementById('deviceProgressText');
+  const headerDeviceBadge = document.getElementById('headerDeviceBadge');
+  const deviceListEl = document.getElementById('deviceList');
+  const btnAddDevice = document.getElementById('btnAddDevice');
+  const btnClearDevices = document.getElementById('btnClearDevices');
+  const toastEl = document.getElementById('toast');
+
+  let toastTimer = null;
+
+  function showToast(message) {
+    toastEl.textContent = message;
+    toastEl.classList.add('is-show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      toastEl.classList.remove('is-show');
+    }, 2000);
+  }
+
+  /* ==========================================================================
+     3. Step Progress Bar & Sidebar Synchronization
+     ========================================================================== */
+  function updateStepProgressUI() {
+    const done = completedSteps.size;
+    const total = STEP_IDS.length;
+    const pct = Math.round((done / total) * 100);
+
+    progressText.textContent = done + ' / ' + total + ' 完了';
+    progressText.classList.toggle('is-all-done', done === total);
+    mobileProgressText.textContent = done + ' / ' + total;
+    progressFill.style.width = pct + '%';
+
+    STEP_IDS.forEach(function (id) {
+      const isDone = completedSteps.has(id);
+
+      const navCheck = document.querySelector('.nav-check[data-step="' + id + '"]');
+      if (navCheck) {
+        navCheck.checked = isDone;
+        const navItem = navCheck.closest('.nav-item');
+        if (navItem) navItem.classList.toggle('is-checked', isDone);
+      }
+
+      const cardEl = document.getElementById(id);
+      if (cardEl) {
+        cardEl.classList.toggle('is-done', isDone);
+        const toggleBtn = cardEl.querySelector('.done-toggle[data-toggle-step="' + id + '"]');
+        if (toggleBtn) {
+          toggleBtn.textContent = isDone ? '☑ 完了済み' : '☐ 完了にする';
+        }
+      }
+    });
+  }
+
+  function setStepDone(stepId, isDone) {
+    if (isDone) {
+      completedSteps.add(stepId);
+    } else {
+      completedSteps.delete(stepId);
+    }
+    updateStepProgressUI();
+  }
+
+  document.querySelectorAll('.nav-check').forEach(function (cb) {
+    cb.addEventListener('change', function () {
+      setStepDone(cb.getAttribute('data-step'), cb.checked);
+    });
+  });
+
+  document.querySelectorAll('.done-toggle').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const id = btn.getAttribute('data-toggle-step');
+      const nextState = !completedSteps.has(id);
+      setStepDone(id, nextState);
+      if (nextState) {
+        showToast('ステップを完了にしました');
+      }
+    });
+  });
+
+  /* ==========================================================================
+     4. ScrollSpy for Left Navigation Map
+     ========================================================================== */
+  const spyTargets = Array.from(document.querySelectorAll('[data-spy-section]'));
+  const navItems = Array.from(document.querySelectorAll('.nav-item[data-target]'));
+
+  function setActiveNav(targetId) {
+    navItems.forEach(function (item) {
+      item.classList.toggle('is-active', item.getAttribute('data-target') === targetId);
+    });
+  }
+
+  function updateScrollSpy() {
+    const offset = 140;
+    let currentId = spyTargets[0] ? spyTargets[0].getAttribute('data-spy-section') : '';
+
+    for (let i = 0; i < spyTargets.length; i++) {
+      const rect = spyTargets[i].getBoundingClientRect();
+      if (rect.top <= offset) {
+        currentId = spyTargets[i].getAttribute('data-spy-section');
+      } else {
+        break;
+      }
+    }
+
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 24) {
+      const last = spyTargets[spyTargets.length - 1];
+      if (last) currentId = last.getAttribute('data-spy-section');
+    }
+
+    if (currentId) setActiveNav(currentId);
+  }
+
+  let spyTicking = false;
+  window.addEventListener('scroll', function () {
+    if (!spyTicking) {
+      window.requestAnimationFrame(function () {
+        updateScrollSpy();
+        spyTicking = false;
+      });
+      spyTicking = true;
+    }
+  }, { passive: true });
+
+  document.querySelectorAll('.nav-link').forEach(function (link) {
+    link.addEventListener('click', function () {
+      if (sidebar.classList.contains('is-mobile-open')) {
+        sidebar.classList.remove('is-mobile-open');
+        btnMobileNav.setAttribute('aria-expanded', 'false');
+        mobileNavArrow.textContent = '▼';
+      }
+    });
+  });
+
+  btnMobileNav.addEventListener('click', function () {
+    const isOpen = sidebar.classList.toggle('is-mobile-open');
+    btnMobileNav.setAttribute('aria-expanded', String(isOpen));
+    mobileNavArrow.textContent = isOpen ? '▲' : '▼';
+  });
+
+  /* ==========================================================================
+     5. Theme Toggle & Print
+     ========================================================================== */
+  btnTheme.addEventListener('click', function () {
+    const root = document.documentElement;
+    const isLight = root.getAttribute('data-theme') !== 'dark';
+    root.setAttribute('data-theme', isLight ? 'dark' : 'light');
+    themeIcon.textContent = isLight ? '☀' : '🌙';
+    themeLabel.textContent = isLight ? 'ライト' : 'ダーク';
+  });
+
+  btnPrint.addEventListener('click', function () {
+    window.print();
+  });
+
+  /* ==========================================================================
+     6. Right Slide-in Device Checklist Drawer (Zero innerHTML, Pure DOM API)
+     ========================================================================== */
+  function openDrawer() {
+    checklistDrawer.classList.add('is-open');
+    drawerBackdrop.classList.add('is-open');
+    checklistDrawer.setAttribute('aria-hidden', 'false');
+    drawerBackdrop.setAttribute('aria-hidden', 'false');
+    btnOpenDrawer.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeDrawer() {
+    checklistDrawer.classList.remove('is-open');
+    drawerBackdrop.classList.remove('is-open');
+    checklistDrawer.setAttribute('aria-hidden', 'true');
+    drawerBackdrop.setAttribute('aria-hidden', 'true');
+    btnOpenDrawer.setAttribute('aria-expanded', 'false');
+  }
+
+  btnOpenDrawer.addEventListener('click', openDrawer);
+  btnOpenDrawerInline.addEventListener('click', openDrawer);
+  btnCloseDrawer.addEventListener('click', closeDrawer);
+  btnDoneDrawer.addEventListener('click', closeDrawer);
+  drawerBackdrop.addEventListener('click', closeDrawer);
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && checklistDrawer.classList.contains('is-open')) {
+      closeDrawer();
+    }
+  });
+
+  function toHalfWidthDigits(str) {
+    return str
+      .replace(/[\uFF10-\uFF19]/g, function (ch) {
+        return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
+      })
+      .replace(/[^0-9]/g, '');
+  }
+
+  function evaluateDeviceWarning(device) {
+    if (device.protocol !== 'POP') {
+      return '';
+    }
+    const daysNum = device.deleteDays === '' ? NaN : parseInt(device.deleteDays, 10);
+    if (!isNaN(daysNum) && daysNum < standardDays) {
+      return '⚠ 削除日数（' + daysNum + '日）が統一基準（' + standardDays + '日）より短いため、他端末に届かなくなる恐れがあります。';
+    }
+    if (device.done && !device.keepCopy) {
+      return '⚠ POP受信で「コピーを置く」が未チェックです。設定を再確認してください。';
+    }
+    return '';
+  }
+
+  function updateDeviceProgressSummary() {
+    const total = devices.length;
+    let doneCount = 0;
+    for (let i = 0; i < total; i++) {
+      if (devices[i].done) doneCount++;
+    }
+    deviceProgressText.textContent = doneCount + ' / ' + total + ' 台完了';
+    deviceProgressText.classList.toggle('is-all-done', total > 0 && doneCount === total);
+    headerDeviceBadge.textContent = doneCount + '/' + total;
+  }
+
+  function applySecureInputAttrs(el) {
+    el.setAttribute('autocomplete', 'off');
+    el.setAttribute('autocorrect', 'off');
+    el.setAttribute('autocapitalize', 'off');
+    el.setAttribute('spellcheck', 'false');
+  }
+
+  function clearChildren(node) {
+    while (node.firstChild) {
+      node.removeChild(node.firstChild);
+    }
+  }
+
+  function renderDeviceList() {
+    clearChildren(deviceListEl);
+
+    devices.forEach(function (dev, index) {
+      const card = document.createElement('div');
+      card.className = 'device-card';
+
+      const warnMsg = evaluateDeviceWarning(dev);
+      if (dev.done) card.classList.add('is-row-done');
+      if (warnMsg) card.classList.add('is-row-warn');
+
+      // Row Top: No., Name Input, Remove Button
+      const topRow = document.createElement('div');
+      topRow.className = 'device-row-top';
+
+      const noBadge = document.createElement('span');
+      noBadge.className = 'device-no';
+      noBadge.textContent = 'No.' + (index + 1);
+      topRow.appendChild(noBadge);
+
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.className = 'device-input';
+      nameInput.placeholder = '端末名・担当者メモ（例: 受付PC）';
+      nameInput.value = dev.name;
+      nameInput.setAttribute('aria-label', 'No.' + (index + 1) + ' 端末名・担当者メモ');
+      applySecureInputAttrs(nameInput);
+      nameInput.addEventListener('input', function () {
+        dev.name = nameInput.value;
+      });
+      topRow.appendChild(nameInput);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'btn-remove-row';
+      removeBtn.textContent = '削除';
+      removeBtn.setAttribute('aria-label', 'No.' + (index + 1) + ' を削除');
+      removeBtn.addEventListener('click', function () {
+        devices = devices.filter(function (item) {
+          return item.uid !== dev.uid;
+        });
+        renderDeviceList();
+        showToast('端末行を削除しました');
+      });
+      topRow.appendChild(removeBtn);
+
+      card.appendChild(topRow);
+
+      // Row Controls: Protocol, Copy Checkbox, Days Input, Done Checkbox
+      const ctrlRow = document.createElement('div');
+      ctrlRow.className = 'device-row-grid';
+
+      const protoSelect = document.createElement('select');
+      protoSelect.className = 'proto-select';
+      protoSelect.setAttribute('aria-label', '受信の種類');
+      protoSelect.setAttribute('autocomplete', 'off');
+
+      const optPop = document.createElement('option');
+      optPop.value = 'POP';
+      optPop.textContent = 'POP';
+      const optImap = document.createElement('option');
+      optImap.value = 'IMAP';
+      optImap.textContent = 'IMAP';
+      protoSelect.appendChild(optPop);
+      protoSelect.appendChild(optImap);
+      protoSelect.value = dev.protocol;
+
+      protoSelect.addEventListener('change', function () {
+        dev.protocol = protoSelect.value;
+        renderDeviceList();
+      });
+      ctrlRow.appendChild(protoSelect);
+
+      if (dev.protocol === 'POP') {
+        // コピーを置くチェック
+        const copyLabel = document.createElement('label');
+        copyLabel.className = 'inline-check';
+
+        const copyCb = document.createElement('input');
+        copyCb.type = 'checkbox';
+        copyCb.checked = dev.keepCopy;
+        copyCb.addEventListener('change', function () {
+          dev.keepCopy = copyCb.checked;
+          updateRowWarningDisplay(card, dev, warnEl);
+        });
+        copyLabel.appendChild(copyCb);
+
+        const copyText = document.createElement('span');
+        copyText.textContent = 'コピーを置く';
+        copyLabel.appendChild(copyText);
+        ctrlRow.appendChild(copyLabel);
+
+        // 削除日数入力
+        const daysWrap = document.createElement('span');
+        daysWrap.className = 'days-wrap';
+
+        const daysInput = document.createElement('input');
+        daysInput.type = 'text';
+        daysInput.inputMode = 'numeric';
+        daysInput.className = 'days-input';
+        daysInput.maxLength = 3;
+        daysInput.placeholder = String(standardDays);
+        daysInput.value = dev.deleteDays;
+        daysInput.setAttribute('aria-label', 'サーバーから削除する日数');
+        applySecureInputAttrs(daysInput);
+
+        daysInput.addEventListener('input', function () {
+          const clean = toHalfWidthDigits(daysInput.value).slice(0, 3);
+          if (daysInput.value !== clean) daysInput.value = clean;
+          dev.deleteDays = clean;
+          updateRowWarningDisplay(card, dev, warnEl);
+        });
+
+        const daysUnit = document.createElement('span');
+        daysUnit.textContent = '日後削除';
+
+        daysWrap.appendChild(daysInput);
+        daysWrap.appendChild(daysUnit);
+        ctrlRow.appendChild(daysWrap);
+      } else {
+        const imapBadge = document.createElement('span');
+        imapBadge.className = 'imap-note';
+        imapBadge.textContent = 'サーバー同期型（修正不要）';
+        ctrlRow.appendChild(imapBadge);
+      }
+
+      // 完了チェック
+      const doneLabel = document.createElement('label');
+      doneLabel.className = 'inline-check is-done-check';
+
+      const doneCb = document.createElement('input');
+      doneCb.type = 'checkbox';
+      doneCb.checked = dev.done;
+      doneCb.addEventListener('change', function () {
+        dev.done = doneCb.checked;
+        card.classList.toggle('is-row-done', dev.done);
+        updateRowWarningDisplay(card, dev, warnEl);
+        updateDeviceProgressSummary();
+      });
+      doneLabel.appendChild(doneCb);
+
+      const doneText = document.createElement('span');
+      doneText.textContent = '完了';
+      doneLabel.appendChild(doneText);
+      ctrlRow.appendChild(doneLabel);
+
+      card.appendChild(ctrlRow);
+
+      // Warning Badge (always created, toggled via display)
+      const warnEl = document.createElement('div');
+      warnEl.className = 'row-warn-badge';
+      if (warnMsg) {
+        warnEl.textContent = warnMsg;
+        warnEl.style.display = 'block';
+      } else {
+        warnEl.style.display = 'none';
+      }
+      card.appendChild(warnEl);
+
+      deviceListEl.appendChild(card);
+    });
+
+    updateDeviceProgressSummary();
+  }
+
+  function updateRowWarningDisplay(cardEl, dev, warnEl) {
+    const msg = evaluateDeviceWarning(dev);
+    if (msg) {
+      warnEl.textContent = msg;
+      warnEl.style.display = 'block';
+      cardEl.classList.add('is-row-warn');
+    } else {
+      warnEl.textContent = '';
+      warnEl.style.display = 'none';
+      cardEl.classList.remove('is-row-warn');
+    }
+  }
+
+  stdDaysSelect.addEventListener('change', function () {
+    standardDays = parseInt(stdDaysSelect.value, 10) || 14;
+    renderDeviceList();
+    showToast('統一基準を「' + standardDays + '日」に変更しました');
+  });
+
+  btnAddDevice.addEventListener('click', function () {
+    devices.push(createEmptyDevice());
+    renderDeviceList();
+    showToast('端末行を追加しました');
+  });
+
+  function clearAllInMemoryData() {
+    completedSteps.clear();
+    updateStepProgressUI();
+
+    resetDevicesToInitial();
+    stdDaysSelect.value = String(standardDays);
+    renderDeviceList();
+  }
+
+  btnClearDevices.addEventListener('click', function () {
+    resetDevicesToInitial();
+    stdDaysSelect.value = String(standardDays);
+    renderDeviceList();
+    showToast('チェックリストの入力をすべて消去しました');
+  });
+
+  // ページ離脱時にメモリ上の全入力値とチェック状態を自動消去
+  window.addEventListener('pagehide', function () {
+    clearAllInMemoryData();
+  });
+
+  /* ==========================================================================
+     7. Initialize
+     ========================================================================== */
+  resetDevicesToInitial();
+  renderDeviceList();
+  updateStepProgressUI();
+  updateScrollSpy();
+})();
+</script>
+</body>
+</html>
