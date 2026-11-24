@@ -340,11 +340,10 @@
   .nav-group-label {
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     color: var(--text-muted);
     padding: 0 10px;
     margin: 20px 0 8px 0;
-    text-transform: uppercase;
   }
 
   .nav-group-label:first-of-type {
@@ -1205,9 +1204,9 @@
 
   .imap-note {
     font-size: 12px;
-    color: var(--ok-text);
-    background-color: var(--ok-bg);
-    border: 1px solid var(--ok-border);
+    color: var(--text-secondary);
+    background-color: var(--bg-surface-subtle);
+    border: 1px solid var(--border-strong);
     padding: 2px 8px;
     border-radius: 999px;
     font-weight: 600;
@@ -1520,7 +1519,7 @@
           </li>
         </ul>
 
-        <div class="nav-group-label">確認・修正手順（STEP 1〜4）</div>
+        <div class="nav-group-label">3. 確認・修正手順（STEP 1〜4）</div>
         <ul class="nav-list">
           <li class="nav-item" data-target="step-1">
             <input type="checkbox" class="nav-check" data-step="step-1" aria-label="STEP 1を完了にする">
@@ -1532,7 +1531,7 @@
           </li>
           <li class="nav-item" data-target="step-3">
             <input type="checkbox" class="nav-check" data-step="step-3" aria-label="STEP 3を完了にする">
-            <a class="nav-link" href="#step-3"><span class="nav-num">S3</span><span>削除日数を統一【最重要】</span></a>
+            <a class="nav-link" href="#step-3"><span class="nav-num">S3</span><span>削除日数・連動を統一</span></a>
           </li>
           <li class="nav-item" data-target="step-4">
             <input type="checkbox" class="nav-check" data-step="step-4" aria-label="STEP 4を完了にする">
@@ -1575,20 +1574,20 @@
           <div class="doc-card">
             <div class="card-body">
               <p>
-                同じメールアドレスを複数台の端末で共有する場合、<strong>たった1台でも「受信と同時に（または短い日数で）サーバーからメールを消す設定」になっていると、他の端末が受信する前にメールが消えてしまい、届かなくなります。</strong>
+                同じメールアドレスを複数台の端末で共有する場合、<strong>たった1台でも「受信と同時に（または短い日数で）サーバーからメールを消す設定」になっていたり、「1台だけIMAP方式が混在」していたりすると、他の端末が受信する前にサーバーからメールが消えて届かなくなります。</strong>
               </p>
               <p>
-                POP方式でメールを受信しているすべての端末で「サーバーにコピーを残す」「削除する日数を同じにする」設定へ揃えることが、受信漏れを防ぐ確実な対策です。
+                POP方式でメールを受信しているすべての端末で「サーバーにコピーを残す」「削除する日数を同じにする」「ごみ箱連動をオフにする」設定へ揃えることが、受信漏れを防ぐ確実な対策です。
               </p>
 
               <div class="mech-grid">
                 <div class="mech-box is-ng">
-                  <div class="mech-title">⚠ トラブルが起きる状態（不統一）</div>
-                  <div>端末Aがメールを受信した直後にサーバーから削除してしまうと、あとから受信操作をした端末B・端末Cにはそのメールが届きません。</div>
+                  <div class="mech-title">⚠ トラブルが起きる状態（不統一・混在）</div>
+                  <div>端末Aが受信直後にサーバーから削除したり、1台だけ混在したIMAP端末で削除・移動を行ったりすると、あとから受信操作をした端末B・端末Cにはそのメールが届きません。</div>
                 </div>
                 <div class="mech-box is-ok">
                   <div class="mech-title">✓ 正常に共有できる状態（統一済み）</div>
-                  <div>全端末で「サーバーにコピーを置く」を有効にし、削除日数を同じ日数（14日または30日）に揃えることで、どの端末でも漏れなく受信できます。</div>
+                  <div>全端末をPOP方式に揃え、「サーバーにコピーを置く」を有効にし、削除日数を同じ日数（14日または30日）に統一することで、どの端末でも漏れなく受信できます。</div>
                 </div>
               </div>
             </div>
@@ -1605,12 +1604,12 @@
           <div class="doc-card">
             <div class="card-body">
               <p>
-                メールソフトを初期設定のまま使い始めると、標準で「サーバーから削除する」または「短い期間で削除する」設定になっているケースが多くあります。
+                Outlook でメールアドレスとパスワードだけを入力して自動設定すると、標準で <code>IMAP/SMTP</code> として登録されたり、短い期間でサーバーから削除する設定になったりするケースが多くあります。
               </p>
               <div class="priority-list">
                 <div class="priority-item">
-                  <div class="priority-item-title">最近新しく導入・買い替えしたPCやスマホ</div>
-                  <p>アカウントを新規追加した際、配信設定（コピーを残す日数）の変更が漏れているケースが最も多く見られます。</p>
+                  <div class="priority-item-title">最近新しく導入・再設定したPCやスマホ</div>
+                  <p>アカウントを自動設定で新規追加した際、1台だけ <code>IMAP/SMTP</code> になっていたり、配信日数の変更が漏れていたりするケースが最も多く見られます。</p>
                 </div>
                 <div class="priority-item">
                   <div class="priority-item-title">普段あまり使っていないサブ端末</div>
@@ -1671,13 +1670,13 @@
                 <li><strong><code>POP/SMTP</code></strong> になっている場合、該当する共有メールアドレスを選択して <span class="ui-btn">変更</span> をクリックします。</li>
               </ol>
 
-              <div class="info-callout">
-                <strong>※「IMAP」になっている端末について：</strong><br>
-                種類が <code>IMAP/SMTP</code> になっている端末はサーバー同期型のため、ここでの削除日数設定の修正は不要です（チェックリスト上では「IMAP」として完了にして構いません）。
+              <div class="warn-callout">
+                <strong>⚠ 1台だけ「IMAP/SMTP」が混在している場合：</strong><br>
+                他の端末が <code>POP/SMTP</code> なのにこの端末だけ <code>IMAP/SMTP</code> になっていると、この端末でメールを削除・アーカイブ・フォルダー移動した瞬間に<strong>サーバーからも即座に消えてしまい、他のPOP端末に届かなくなります</strong>。受信済みメールのバックアップ（.pst）を取ったうえで、<code>POP/SMTP</code> へ設定し直す必要があります（全端末をIMAPで運用している場合を除く）。
               </div>
 
               <div class="verify-callout">
-                <span class="verify-label">確認ポイント</span>サーバー設定（「POPアカウントの設定」または「アカウントの変更」）画面が開きます。
+                <span class="verify-label">確認ポイント</span>サーバー設定（「POP アカウントの設定」または「アカウントの変更」）画面が開きます。
               </div>
             </div>
           </div>
@@ -1694,27 +1693,36 @@
             </div>
             <div class="card-body">
               <p>
-                画面下部（または <span class="ui-path"><span class="ui-btn">詳細設定</span><span class="ui-sep">＞</span><span class="ui-btn">詳細設定</span></span> タブ内）にある<strong>「配信」</strong>項目を確認し、全端末で以下の2点を同じ設定に揃えます。
+                画面内の<strong>「メールの設定」</strong>欄（または <span class="ui-path"><span class="ui-btn">詳細設定</span><span class="ui-sep">＞</span><span class="ui-btn">詳細設定</span></span> タブ内の「配信」項目）を確認し、全端末で以下の3点を同じ設定に揃えます。
               </p>
 
               <div class="unify-rules">
                 <div class="unify-rule-row">
                   <span class="rule-num">1</span>
-                  <div><strong>「サーバーにメッセージのコピーを置く」</strong>にチェックを入れる</div>
+                  <div><strong>「サーバーにメッセージのコピーを残す（置く）」</strong>にチェックを入れる</div>
                 </div>
                 <div class="unify-rule-row">
                   <span class="rule-num">2</span>
                   <div><strong>「サーバーから削除する」</strong>にチェックを入れ、全端末で同じ日数（<strong><code>14日</code></strong> または <strong><code>30日</code></strong>）に設定する</div>
                 </div>
+                <div class="unify-rule-row">
+                  <span class="rule-num">3</span>
+                  <div><strong>「［削除済みアイテム］から削除されたら、サーバーから削除」</strong>のチェックを外す（オフにする）</div>
+                </div>
+              </div>
+
+              <div class="info-callout">
+                <strong>※ バージョンによる画面の違い：</strong><br>
+                Microsoft 365 や Office 2019以降の新しいクラシック版 Outlook では「詳細設定」ボタンが表示されず、開いた画面の下部（「メールの設定」欄）にスライダーやチェックボックスが直接並びます。その場合は画面内の項目をそのまま変更してください。
               </div>
 
               <div class="warn-callout">
-                <strong>⚠ 削除日数の不統一に注意：</strong><br>
-                他の端末が「14日」や「30日」になっていても、<strong>1台だけ日数が短い設定（例：5日）</strong>が残っていると、その端末が受信したタイミングで5日前のメールがサーバーから消えてしまい、長期間起動していなかった他の端末に届かなくなります。
+                <strong>⚠ 削除日数の不統一・ごみ箱連動に注意：</strong><br>
+                1台でも短い日数（例：5日）が残っていたり、「削除済みアイテム連動」がオンのまま1台のPCでごみ箱を空にしたりすると、サーバーからメールが消えて他の端末に届かなくなります。
               </div>
 
               <div class="verify-callout">
-                <span class="verify-label">確認ポイント</span>「サーバーにメッセージのコピーを置く」がオンになり、削除日数がチーム・社内で決めた統一基準（14日または30日）と一致していることを確認します。
+                <span class="verify-label">確認ポイント</span>「コピーを残す」がオン、削除日数が統一基準（14日または30日）と一致し、「削除済みアイテム連動」がオフになっていることを確認します。
               </div>
             </div>
           </div>
@@ -1733,13 +1741,13 @@
                 <li>
                   設定を変更したら、画面下の
                   <span class="ui-path"><span class="ui-btn">次へ</span><span class="ui-sep">＞</span><span class="ui-btn">完了</span></span>
-                  （詳細設定ウィンドウを開いた場合は <span class="ui-btn">OK</span> → <span class="ui-btn">次へ</span> → <span class="ui-btn">完了</span>）をクリックして保存し、画面を閉じます。
+                  （詳細設定ウィンドウを開いた場合は <span class="ui-btn">OK</span> → <span class="ui-btn">次へ</span> → <span class="ui-btn">完了</span>）をクリックして保存し、画面を閉じます（※右上の「×」で閉じると保存されない場合があります）。
                 </li>
-                <li>テストメールを1通送信し、設定した端末だけでなく<strong>他の共有端末でも同じメールが受信できるか</strong>を確認します。</li>
+                <li>テストメールを1通送信し、設定した端末だけでなく<strong>他の共有端末でも同じメールが漏れなく受信できるか</strong>を確認します。</li>
               </ol>
 
               <div class="verify-callout">
-                <span class="verify-label">確認ポイント</span>「テストアカウント設定」の画面でステータスに<strong>緑のチェック</strong>が付き、テストメールが複数端末で問題なく受信できれば完了です。
+                <span class="verify-label">確認ポイント</span>「アカウントの更新が完了しました」（またはテスト送信の緑チェック）が表示され、テストメールが複数端末で問題なく受信できれば完了です。
               </div>
             </div>
           </div>
@@ -1748,7 +1756,7 @@
           <div class="checklist-banner">
             <div class="checklist-banner-text">
               <strong>複数台の確認漏れを防ぐには：</strong><br>
-              右上の「端末チェックリスト」を開くと、確認した端末ごとの種別（POP/IMAP）と削除日数を一時メモしながら抜け漏れをチェックできます。
+              右上の「端末チェックリスト」を開くと、確認した端末ごとの種別（POP/IMAP）と削除日数を一時メモしながら抜け漏れや混在をチェックできます。
             </div>
             <button type="button" class="btn btn-accent" id="btnOpenDrawerInline">📋 端末チェックリストを開く</button>
           </div>
@@ -1797,8 +1805,8 @@
             <div class="card-body">
               <p>複数端末でのメール受信漏れを防ぐため、以下の3点をチーム・社内の基本ルールとして共有しておくと安心です。</p>
               <ol>
-                <li><strong>全POP端末で「コピーを置く＋同じ削除日数（14日または30日）」に統一する</strong>（1台でも短い日数を残さない）</li>
-                <li><strong>新しいPC・スマホを追加するときに必ず同じ設定を適用する</strong>（初期設定のまま使い始めない）</li>
+                <li><strong>全端末をPOP方式に揃え、「コピーを残す＋同じ削除日数（14日または30日）＋ごみ箱連動オフ」に統一する</strong>（IMAPの混在や短い日数を残さない）</li>
+                <li><strong>新しいPC・スマホを追加するときは自動設定のままにせず、必ず手動でPOPと統一基準を適用する</strong></li>
                 <li><strong>クラシック版 Outlook のまま運用し、不達時はWebメール側の迷惑メールフォルダも確認する</strong></li>
               </ol>
             </div>
@@ -2073,6 +2081,7 @@
     checklistDrawer.setAttribute('aria-hidden', 'false');
     drawerBackdrop.setAttribute('aria-hidden', 'false');
     btnOpenDrawer.setAttribute('aria-expanded', 'true');
+    btnCloseDrawer.focus();
   }
 
   function closeDrawer() {
@@ -2103,11 +2112,24 @@
       .replace(/[^0-9]/g, '');
   }
 
+  function hasAnyPopDevice() {
+    for (let i = 0; i < devices.length; i++) {
+      if (devices[i].protocol === 'POP') return true;
+    }
+    return false;
+  }
+
   function evaluateDeviceWarning(device) {
-    if (device.protocol !== 'POP') {
+    if (device.protocol === 'IMAP') {
+      if (hasAnyPopDevice()) {
+        return '⚠ POP端末と混在しています。IMAP側でメールを削除・移動するとサーバーからも即座に消えて他のPOP端末に届かなくなるため、バックアップ後にPOPへ切り替えてください。';
+      }
       return '';
     }
-    const daysNum = device.deleteDays === '' ? NaN : parseInt(device.deleteDays, 10);
+    if (device.deleteDays === '') {
+      return '⚠ 削除日数が未入力です（受信と同時にサーバーから削除する設定になっていないか確認し、' + standardDays + '日に揃えてください）。';
+    }
+    const daysNum = parseInt(device.deleteDays, 10);
     if (!isNaN(daysNum) && daysNum < standardDays) {
       return '⚠ 削除日数（' + daysNum + '日）が統一基準（' + standardDays + '日）より短いため、他端末に届かなくなる恐れがあります。';
     }
@@ -2143,6 +2165,7 @@
 
   function renderDeviceList() {
     clearChildren(deviceListEl);
+    const popExists = hasAnyPopDevice();
 
     devices.forEach(function (dev, index) {
       const card = document.createElement('div');
@@ -2263,7 +2286,7 @@
       } else {
         const imapBadge = document.createElement('span');
         imapBadge.className = 'imap-note';
-        imapBadge.textContent = 'サーバー同期型（修正不要）';
+        imapBadge.textContent = popExists ? 'サーバー同期型（要POP切替）' : 'サーバー同期型（全端末IMAPなら不要）';
         ctrlRow.appendChild(imapBadge);
       }
 
